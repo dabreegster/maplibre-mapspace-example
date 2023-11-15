@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Add a pattern to a polygon</title>
+    <meta
+      property="og:description"
+      content="Use fill-pattern to draw a polygon from a repeating image pattern."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
+    />
+    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body,
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script>
+      let x1 = 3.18;
+      let x2 = 3.85;
+      let y1 = 48.15;
+      let y2 = 47.67;
+
+      let centerX = (x1 + x2) / 2.0;
+      let centerY = (y1 + y2) / 2.0;
+
+      const map = new maplibregl.Map({
+        container: "map",
+        style:
+          "https://api.maptiler.com/maps/streets/style.json?key=MZEJTanw3WpxRvt7qDfo",
+        zoom: 5,
+        center: [centerX, centerY],
+      });
+
+      map.on("load", () => {
+        // The polygon is always a fixed size in "map-space"; as you zoom, it changes in "screen-space" pixels
+        map.addSource("polygon", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [x1, y1],
+                  [x2, y1],
+                  [x2, y2],
+                  [x1, y2],
+                  [x1, y1],
+                ],
+              ],
+            },
+          },
+        });
+        map.addLayer({
+          id: "polygon-layer",
+          source: "polygon",
+          type: "fill",
+          paint: {
+            "fill-color": "red",
+            "fill-opacity": 0.5,
+          },
+        });
+
+        // Try to draw an image that fits in the polygon and also changes pixel-size as you zoom
+        map.addSource("point", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Point",
+              coordinates: [centerX, centerY],
+            },
+          },
+        });
+        map.loadImage(
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Cat_silhouette.svg/64px-Cat_silhouette.svg.png",
+          (err, image) => {
+            if (err) throw err;
+
+            map.addImage("pattern", image);
+
+            let imageWidth = image.width;
+            let imageHeight = image.height;
+            console.log({ imageHeight, imageWidth });
+
+            let scale = 2.0;
+
+            // Possible references:
+            // https://gist.github.com/perrygeo/4478844
+            // https://stackoverflow.com/questions/75056890/i-need-a-fixed-size-icon-that-doesnt-scale-for-zoom-in-zoom-out-mapbox
+            // https://stackoverflow.com/questions/65499971/displaying-icons-with-exact-size   AHA!
+            // https://stackoverflow.com/questions/75945660/adjusting-icon-size-in-mapbox-based-on-zoom-level-and-pitch
+
+            map.addLayer({
+              id: "pattern-layer",
+              type: "symbol",
+              source: "point",
+              layout: {
+                "icon-image": "pattern",
+                // TODO interpolate has to be the top-level expression; we can't do ["*", scale, [interpolate...]]
+                "icon-size": [
+                  "interpolate",
+                  ["exponential", 2],
+                  ["zoom"],
+                  1,
+                  1.0 * scale,
+                  18,
+                  10.0 * scale,
+                ],
+              },
+            });
+          }
+        );
+      });
+    </script>
+  </body>
+</html>
