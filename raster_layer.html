@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Add a pattern to a polygon</title>
+    <meta
+      property="og:description"
+      content="Use fill-pattern to draw a polygon from a repeating image pattern."
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
+    />
+    <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body,
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script>
+      let x1 = 3.18;
+      let x2 = 3.85;
+      let y1 = 48.15;
+      let y2 = 47.67;
+
+      let centerX = (x1 + x2) / 2.0;
+      let centerY = (y1 + y2) / 2.0;
+
+      const map = new maplibregl.Map({
+        container: "map",
+        style:
+          "https://api.maptiler.com/maps/streets/style.json?key=MZEJTanw3WpxRvt7qDfo",
+        zoom: 5,
+        center: [centerX, centerY],
+      });
+
+      map.on("load", () => {
+        map.addSource("image-source", {
+          type: "image",
+          url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Cat_silhouette.svg/64px-Cat_silhouette.svg.png",
+          coordinates: [
+            [x1, y1],
+            [x2, y1],
+            [x2, y2],
+            [x1, y2],
+          ],
+        });
+        map.addLayer({
+          id: "image-layer",
+          source: "image-source",
+          type: "raster",
+        });
+      });
+    </script>
+  </body>
+</html>
